@@ -1,0 +1,151 @@
+﻿@page "/"
+@using System.Timers
+
+<style>
+	.container {
+		width: 400px;
+	}
+
+	button {
+		width: 100px;
+		height: 100px;
+		font-size: 50px;
+	}
+</style>
+
+<div class="container">
+	<div class="row">
+		<h1>Difficulty: @difficulty</h1>
+	</div>
+	<div class="row"> <!-- This is adding a difficulty slider at the top of the page -->
+		<input type="range"
+			class="col-10 form-control-range"
+			   min="1" max="4" @bind="difficulty" /> <!-- And this is setting the possible difficulty levels-->
+	</div>
+	
+	<div class="row">
+		@for (var animalNumber = 0; animalNumber < shuffledAnimals.Count; animalNumber++)
+		{
+			var animal = shuffledAnimals[animalNumber];
+			var uniqueDescription = $"Button #{animalNumber}";
+
+			<div class="col-3">
+				<button @onclick="@(() => ButtonClick(animal, uniqueDescription))"
+						type="button" class="btn btn-outline-dark">
+					<h1> @animal </h1>
+				</button>
+			</div>
+		}
+	</div>
+	<div class="row">
+		<h2>Matches found: @matchesFound</h2>
+	</div>
+	<div class="row">
+		<h2>Time: @timeDisplay</h2>
+	</div>
+	<div class="row">
+		<h2>Previous Time: @lastTime</h2>
+	</div>
+</div>
+
+@code {
+	List<string> animalEmoji = new List<string>()
+	{
+		"A", "A",
+		"B", "B",
+		"C", "C",
+		"D", "D",
+		"E", "E",
+		"F", "F",
+		"G", "G",
+		"H", "H",
+	};
+
+	// Setting Up Variables
+	List<string> shuffledAnimals = new List<string>();
+	int matchesFound = 0;
+	Timer timer;
+	int tenthOfSecondsElapsed = 0;
+	string timeDisplay;
+	string difficulty; // This is the difficulty setting.
+	string lastTime; // This is the variable that tracks your time on your previous run.
+	string lastAnimalFound = string.Empty;
+	string lastDescription = string.Empty;
+
+
+	// Establish values when the game is first booted up
+	protected override void OnInitialized()
+	{
+		timer = new Timer(100);
+		timer.Elapsed += Timer_Tick;
+
+		SetUpGame();
+	}
+
+	// Establish/re-establish values when the game is starting
+	private void SetUpGame()
+	{
+		Random random = new Random();
+		shuffledAnimals = animalEmoji
+			.OrderBy(item => random.Next())
+			.ToList();
+		matchesFound = 0;
+
+		// The following corresponds the difficulty setting with the time limit
+		// BUG: You have to choose the difficulty slider before starting a new game
+		if (difficulty == "1") { tenthOfSecondsElapsed = 400; }
+		else if (difficulty == "2") { tenthOfSecondsElapsed = 300; }
+		else if (difficulty == "3") { tenthOfSecondsElapsed = 200; }
+		else if (difficulty == "4") { tenthOfSecondsElapsed = 100; }
+		else { tenthOfSecondsElapsed = 400; }
+	}
+
+	// When you click on an animal
+	private void ButtonClick(string animal, string animalDescription)
+	{
+		if (lastAnimalFound == string.Empty)
+		{
+			// First selection of a pair. Remember it!
+			lastAnimalFound = animal;
+			lastDescription = animalDescription;
+			timer.Start();
+		}
+		else if ((lastAnimalFound == animal) && (animalDescription != lastDescription))
+		{
+			// Match found! Reset for the next pair.
+			lastAnimalFound = string.Empty;
+
+			// Then replace found animals with empty string
+			shuffledAnimals = shuffledAnimals
+				.Select(a => a.Replace(animal, string.Empty))
+				.ToList();
+			matchesFound++;
+			if (matchesFound == 8)
+			{
+				timer.Stop();
+				lastTime = timeDisplay; // This remembers the time elapsed of your previous run
+				timeDisplay += " - Play Again?";
+				SetUpGame();
+			}
+		}
+		else
+		{
+			//User selected a pair that don't match
+			// Reset the selection
+			lastAnimalFound = string.Empty;
+		}
+	}
+
+	private void Timer_Tick(Object source, ElapsedEventArgs e)
+	{
+		InvokeAsync(() =>
+		{
+			tenthOfSecondsElapsed--; // This counts the timer down, not up
+			timeDisplay = (tenthOfSecondsElapsed / 10F)
+				.ToString("0.0s");
+			StateHasChanged();
+		});
+		if (tenthOfSecondsElapsed == 0) { timer.Stop(); } // Stops timer when it hits zero
+	}
+
+}
