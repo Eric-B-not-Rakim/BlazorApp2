@@ -15,12 +15,12 @@
 
 <div class="container">
 	<div class="row">
-		<h1>Difficulty: @difficulty</h1>
+		<h3>Difficulty: @difficulty (@difficultyLabel)</h3> <!-- Here we establish the notion of difficulty. This presents the time limit. -->
 	</div>
-	<div class="row"> <!-- This is adding a difficulty slider at the top of the page -->
+	<div class="row"> <!-- This is adding a difficulty slider at the top of the page: players can choose how hard they want the game to be -->
 		<input type="range"
 			class="col-10 form-control-range"
-			   min="1" max="4" @bind="difficulty" /> <!-- And this is setting the possible difficulty levels-->
+			   min="1" max="4" @bind="difficulty" /> <!-- And this is setting the possible difficulty levels, 1 being easy, 4 being difficult-->
 	</div>
 	
 	<div class="row">
@@ -39,12 +39,15 @@
 	</div>
 	<div class="row">
 		<h2>Matches found: @matchesFound</h2>
+		<!-- This indicated how many matches a player has found in a given game -->
 	</div>
 	<div class="row">
 		<h2>Time: @timeDisplay</h2>
+		<!-- This displays the time -->
 	</div>
 	<div class="row">
 		<h2>Previous Time: @lastTime</h2>
+		<!-- This displays how much time was left over in the last game -->
 	</div>
 </div>
 
@@ -68,6 +71,7 @@
 	int tenthOfSecondsElapsed = 0;
 	string timeDisplay;
 	string difficulty; // This is the difficulty setting.
+	string difficultyLabel;
 	string lastTime; // This is the variable that tracks your time on your previous run.
 	string lastAnimalFound = string.Empty;
 	string lastDescription = string.Empty;
@@ -78,6 +82,8 @@
 	{
 		timer = new Timer(100);
 		timer.Elapsed += Timer_Tick;
+
+		difficulty = "1"; // Automatically sets up the difficulty so we don't start with difficulty = null
 
 		SetUpGame();
 	}
@@ -92,12 +98,26 @@
 		matchesFound = 0;
 
 		// The following corresponds the difficulty setting with the time limit
-		// BUG: You have to choose the difficulty slider before starting a new game
-		if (difficulty == "1") { tenthOfSecondsElapsed = 400; }
-		else if (difficulty == "2") { tenthOfSecondsElapsed = 300; }
-		else if (difficulty == "3") { tenthOfSecondsElapsed = 200; }
-		else if (difficulty == "4") { tenthOfSecondsElapsed = 100; }
-		else { tenthOfSecondsElapsed = 400; }
+		// BUG: You have to choose the difficulty slider before starting a new game. Still not sure how to fix this.
+		switch (difficulty)
+		{
+			case "1": // 40 Seconds
+				tenthOfSecondsElapsed = 400;
+				difficultyLabel = "40 Seconds";
+				break;
+			case "2": // 30 Seconds
+				tenthOfSecondsElapsed = 300;
+				difficultyLabel = "30 Seconds";
+				break;
+			case "3": // 20 Seconds
+				tenthOfSecondsElapsed = 200;
+				difficultyLabel = "20 Seconds";
+				break;
+			case "4": // 10 Seconds
+				tenthOfSecondsElapsed = 100;
+				difficultyLabel = "10 Seconds";
+				break;
+		}
 	}
 
 	// When you click on an animal
@@ -136,6 +156,7 @@
 		}
 	}
 
+	// Timer ticking
 	private void Timer_Tick(Object source, ElapsedEventArgs e)
 	{
 		InvokeAsync(() =>
